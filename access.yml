@@ -1,0 +1,10 @@
+legoktm:
+  password: 123
+  datasets:
+    - test
+    - test2
+addshore:
+  password: 456
+  datasets:
+    - test
+    - test2
