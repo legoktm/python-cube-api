@@ -24,9 +24,9 @@ IN THE SOFTWARE.
 import cgitb
 cgitb.enable()
 import cgi
-import json
 import os
 import requests
+import simplejson as json
 import yaml
 
 url = 'http://stats.wmflabs.org:83/thing'
