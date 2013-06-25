@@ -36,7 +36,7 @@ def die(code, message):
     print json.dumps({'error': {'code': code, 'message': message}})
     quit()
 
-with open('~/.access.yml', 'r') as f:
+with open('~/access.yml', 'r') as f:
     access = yaml.load(f)
 
 #Check if POST
