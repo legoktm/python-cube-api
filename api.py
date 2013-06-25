@@ -21,9 +21,13 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 IN THE SOFTWARE.
 """
 
-import cgitb
-cgitb.enable()
-import cgi
+from flask import Flask
+from flask import request
+app = Flask(__name__)
+app.debug = True
+
+
+
 import os
 import requests
 import simplejson as json
@@ -33,38 +37,35 @@ url = 'http://stats.wmflabs.org:83/thing'
 
 
 def die(code, message):
-    print json.dumps({'error': {'code': code, 'message': message}})
-    quit()
+    return json.dumps({'error': {'code': code, 'message': message}})
 
 with open(os.path.expanduser('~/access.yml'), 'r') as f:
     access = yaml.load(f)
 
-#Check if POST
-if os.environ['REQUEST_METHOD'].lower() != 'post':
-    die('mustpost', 'Your request must be posted.')
+@app.route('/v1/api/')
+def forward_req():
+    if request.method != 'POST':
+        return die('mustpost', 'Your request must be posted.')
+    required = ['username', 'password', 'dataset']
+    #username: Username
+    #password: Password
+    #dataset: Which data group to post to.
+    for param in required:
+        if not param in request:
+            return die('missingparam', 'The parameter "{0}" was missing.'.format(param))
 
+    username = request.form['username']
+    if not username in access:
+        return die('notauthorized', 'Your username has not been authorized for access.')
 
-form = cgi.FieldStorage()
-required = ['username', 'password', 'dataset']
-#username: Username
-#password: Password
-#dataset: Which data group to post to.
-for param in required:
-    if not param in required:
-        die('missingparam', 'The parameter "{0}" was missing.'.format(param))
+    if request.form['password'] != access[username]['password']:
+        return die('wrongpass', 'Your password is wrong.')
 
-username = form['username'].value
-if not username in access:
-    die('notauthorized', 'Your username has not been authorized for access.')
+    if request.form['dataset'] in access[username]['datasets']:
+        return die('notauthorized', 'Your account is not authorized for that dataset.')
 
-if form['password'].value != access[username]['password']:
-    die('wrongpass', 'Your password is wrong.')
+    #Yay, lets do it.
 
-if form['dataset'].value in access[username]['datasets']:
-    die('notauthorized', 'Your account is not authorized for that dataset.')
-
-#Yay, lets do it.
-
-data = json.loads(form['data'].value)
-r = requests.post(url, params=data)
-print json.dumps(r.json())  # This seems silly.
+    data = json.loads(request.form['data'])
+    r = requests.post(url, params=data)
+    return json.dumps(r.json())  # This seems silly.
