@@ -21,17 +21,17 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 IN THE SOFTWARE.
 """
 
-from flask import Flask
-from flask import request
+import os
+import requests
+import simplejson as json
+import yaml
+
+from flask import Flask, request
 app = Flask(__name__)
 app.debug = True
 
 
 
-import os
-import requests
-import simplejson as json
-import yaml
 
 url = 'http://stats.wmflabs.org:83/thing'
 
@@ -42,10 +42,8 @@ def die(code, message):
 with open(os.path.expanduser('~/access.yml'), 'r') as f:
     access = yaml.load(f)
 
-@app.route('/v1/api/')
+@app.route('/v1/api/', methods=['POST'])
 def forward_req():
-    if request.method != 'POST':
-        return die('mustpost', 'Your request must be posted.')
     required = ['username', 'password', 'dataset']
     #username: Username
     #password: Password
